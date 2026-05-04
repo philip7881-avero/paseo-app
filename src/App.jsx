@@ -210,13 +210,52 @@ function OtrosPill({ checked, onCheck, text, onTextChange }) {
   )
 }
 
+
+function wDesc(c) {
+  return c === 0 ? 'Despejado' : c <= 2 ? 'Parcial nublado' : c <= 9 ? 'Nublado' : c <= 49 ? 'Llovizna' : c <= 69 ? 'Lluvia' : 'Tormenta'
+}
+function useWeather() {
+  const [weather, setWeather] = useState(null)
+  useEffect(() => {
+    fetch('https://api.open-meteo.com/v1/forecast?latitude=-33.3167&longitude=-71.4167&daily=temperature_2m_max,temperature_2m_min,weathercode&timezone=America%2FSantiago&forecast_days=7')
+      .then(r => r.json())
+      .then(d => {
+        const days = d.daily.time.map((t,i) => ({ dow: new Date(t+'T12:00:00').getDay(), max: Math.round(d.daily.temperature_2m_max[i]), min: Math.round(d.daily.temperature_2m_min[i]), code: d.daily.weathercode[i] }))
+        const fri = days.find(d => d.dow === 5)
+        const sat = days.find(d => d.dow === 6)
+        if (fri && sat) setWeather({ v: { max:fri.max, min:fri.min, desc:wDesc(fri.code) }, s: { max:sat.max, min:sat.min, desc:wDesc(sat.code) } })
+      }).catch(()=>{})
+  }, [])
+  return weather
+}
+
 /* ── LANDING ── */
 function LandingScreen({ config, onEnter }) {
+  const weather = useWeather()
   const GAP = 2
   const cell = { display:'flex', overflow:'hidden', position:'relative' }
   const Img = ({ src }) => <img src={src} style={{ width:'100%', height:'100%', objectFit:'cover', objectPosition:'center 30%', display:'block' }} />
   return (
     <div style={{ minHeight:'100vh', background:'#000', display:'flex', flexDirection:'column', fontFamily:mono, position:'relative', overflow:'hidden' }}>
+      {weather && (
+        <div style={{position:'absolute',top:0,left:0,right:0,zIndex:20,padding:'12px 20px',background:'linear-gradient(to bottom,rgba(0,0,0,0.75) 0%,transparent 100%)'}}>
+          <p style={{fontFamily:mono,fontSize:9,fontWeight:600,letterSpacing:'0.2em',textTransform:'uppercase',color:'rgba(255,255,255,0.4)',margin:'0 0 8px',textAlign:'center'}}>Los Perales de Tapihue</p>
+          <div style={{display:'flex',justifyContent:'center',gap:32}}>
+            <div style={{textAlign:'center'}}>
+              <p style={{fontFamily:mono,fontSize:9,fontWeight:700,letterSpacing:'0.15em',textTransform:'uppercase',color:'rgba(255,255,255,0.35)',margin:'0 0 3px'}}>Viernes</p>
+              <p style={{fontFamily:mono,fontSize:13,fontWeight:600,color:'rgba(255,255,255,0.7)',margin:'0 0 2px'}}>{weather.v.max}° / {weather.v.min}°</p>
+              <p style={{fontFamily:mono,fontSize:9,color:'rgba(255,255,255,0.4)',margin:0}}>{weather.v.desc}</p>
+            </div>
+            <div style={{width:1,background:'rgba(255,255,255,0.15)',alignSelf:'stretch'}} />
+            <div style={{textAlign:'center'}}>
+              <p style={{fontFamily:mono,fontSize:9,fontWeight:700,letterSpacing:'0.15em',textTransform:'uppercase',color:'rgba(255,255,255,0.35)',margin:'0 0 3px'}}>Sábado</p>
+              <p style={{fontFamily:mono,fontSize:13,fontWeight:600,color:'rgba(255,255,255,0.7)',margin:'0 0 2px'}}>{weather.s.max}° / {weather.s.min}°</p>
+              <p style={{fontFamily:mono,fontSize:9,color:'rgba(255,255,255,0.4)',margin:0}}>{weather.s.desc}</p>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div style={{ flex:1, display:'flex', flexDirection:'column', gap:GAP, maxHeight:'calc(100vh - 110px)' }}>
         <div style={{ display:'flex', gap:GAP, flex:'1.3 0 0' }}>
           <div style={{ ...cell, flex:'2 0 0' }}><Img src={PHOTOS[0]} /></div>
