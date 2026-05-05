@@ -350,7 +350,7 @@ function ParticipantApp({ config, onAdminClick }) {
   const handleSubmit = async () => {
     setSubmitting(true)
     const existing = await sg(SK.pax) || []
-    const arr = Array.isArray(existing) ? existing : Object.values(existing)
+    const arr = (Array.isArray(existing) ? existing : Object.values(existing)).filter(Boolean)
     const idx = arr.findIndex(p => p.name.toLowerCase().trim() === form.name.toLowerCase().trim())
     const participant = { id:idx >= 0 ? arr[idx].id : Date.now().toString(), name:form.name.trim(), phone:form.phone.trim(), arrival:form.arrival, departure:form.departure, prefs:form.prefs, ts:Date.now() }
     const newPax = idx >= 0 ? arr.map((x, i) => i === idx ? participant : x) : [...arr, participant]
